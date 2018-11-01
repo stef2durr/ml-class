@@ -15,7 +15,9 @@ from plotutil import PlotCallback
 wandb.init()
 config = wandb.config
 
+# forecasting using predictions as input
 config.repeated_predictions = True
+# lookback should be far enough to capture anything in past that will matter in future
 config.look_back = 4
 
 def load_data(data_type="airline"):
@@ -42,15 +44,18 @@ def create_dataset(dataset):
 data = load_data("sin")
     
 # normalize data to between 0 and 1
+# should probably normalize test based on training data
+# can leave room for potential large value in test - normalize 0 and .9
 max_val = max(data)
 min_val = min(data)
 data=(data-min_val)/(max_val-min_val)
 
-# split into train and test sets
+# split into train and test sets, no shuffle b/c data matters
 split = int(len(data) * 0.70)
 train = data[:split]
 test = data[split:]
 
+# adds new extra dimension
 trainX, trainY = create_dataset(train)
 testX, testY = create_dataset(test)
 
@@ -59,8 +64,18 @@ testX = testX[:, :, np.newaxis]
 
 # create and fit the RNN
 model = Sequential()
-model.add(SimpleRNN(1, input_shape=(config.look_back,1 )))
+# 1 => number of inputs/dimensions
+# config.look_back, # = input shape = 4 previous numbers and 1 number in each case
+# state size (state vector size) is first 1
+# cannot change state size without adding final perceptron
+model.add(SimpleRNN(2, input_shape=(config.look_back,1 )))
+# dense layer makes so that output returns 1 number
+model.add(Dense(1))
+# rmsprop traditional for LSTM, adam usually used for RNN
 model.compile(loss='mae', optimizer='rmsprop')
+# more epochs - know if loss keeps going down
+# learning rate - higher (0.01, 0.1) to make model converge
+# if loss going up then learning rate is might be too high
 model.fit(trainX, trainY, epochs=1000, batch_size=20, validation_data=(testX, testY),  callbacks=[WandbCallback(), PlotCallback(trainX, trainY, testX, testY, config.look_back)])
 
 
