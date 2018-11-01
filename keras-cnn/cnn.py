@@ -23,7 +23,7 @@ X_train /= 255.
 X_test = X_test.astype('float32')
 X_test /= 255.
 
-#reshape input data
+#reshape input data - needs extra dimension (2d convolution = 3 dimensions)
 X_train = X_train.reshape(X_train.shape[0], config.img_width, config.img_height, 1)
 X_test = X_test.reshape(X_test.shape[0], config.img_width, config.img_height, 1)
 
