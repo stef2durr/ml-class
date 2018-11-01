@@ -19,9 +19,11 @@ args = parser.parse_args()
 
 run = wandb.init()
 config = run.config
+# state size
 config.hidden_nodes = 128
 config.batch_size = 256
 config.file = args.text
+# maxlen same as lookback
 config.maxlen = 200
 config.step = 3
 
@@ -50,7 +52,7 @@ for i, sentence in enumerate(sentences):
     y[i, char_indices[next_chars[i]]] = 1
 
 model = Sequential()
-model.add(GRU(128, input_shape=(config.maxlen, len(chars))))
+model.add(GRU(config.hidden_nodes, input_shape=(config.maxlen, len(chars))))
 model.add(Dense(len(chars), activation='softmax'))
 model.compile(loss='categorical_crossentropy', optimizer="rmsprop")
 
